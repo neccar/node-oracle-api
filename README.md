@@ -1,4 +1,4 @@
-# node-oracle-api
+# node-oracle-api (wip)
 
 express based rest api connecting to oracle db
 

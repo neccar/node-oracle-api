@@ -3,68 +3,56 @@ import * as httpMocks from 'node-mocks-http';
 import * as customerService from './customer.db.service';
 import {get} from './customer.controller';
 
-const customerDetail = {
-	customer_NAME: 'BSS customerS REAL NAME',
-	EMAIL_ADDRESS: 'BSScustomerSEMAIL@SKY.UK'
+const customer = {
+  ID: '1',
+  NAME: 'John',
+  SURNAME: 'Smith',
+  EMAIL_ADDRESS: 'johnsmith@gmail.com'
 };
-
-const customerGroupInfo = [
-	{
-		customer_CODE: 'BSScustomerCODE',
-		SECURITY_GROUP_CODE: 'PLANDOWN'
-	},
-	{
-		customer_CODE: 'BSScustomerCODE',
-		SECURITY_GROUP_CODE: 'PRESDOWN'
-	}
-];
 
 jest.mock('./customer.db.service');
 
 describe('get', () => {
-	const apiResult =
-    '{"customername":"BSScustomerCODE","name":"BSS customerS REAL NAME","email":"BSScustomerSEMAIL@SKY.UK","hasPlanningDownloadRight":true,"hasPresentationDownloadRight":true}';
-	let req;
-	let res;
-	beforeEach(() => {
-		req = httpMocks.createRequest({
-			method: 'GET',
-			params: {customername: 'BSScustomerCODE'},
-			url: 'api/customers/BSScustomerCODE'
-		});
+  const apiResult =
+    '{"ID":"1","NAME":"John","SURNAME":"Smith","EMAIL_ADDRESS":"johnsmith@gmail.com"}';
+  let req;
+  let res;
+  beforeEach(() => {
+    req = httpMocks.createRequest({
+      method: 'GET',
+      params: {id: 1},
+      url: 'api/customers/id'
+    });
 
-		res = httpMocks.createResponse({eventEmitter: EventEmitter});
+    res = httpMocks.createResponse({eventEmitter: EventEmitter});
 
-		customerService.getcustomerDetail.mockResolvedValue(customerDetail);
-		customerService.getcustomerGroupInfo.mockResolvedValue(customerGroupInfo);
-	});
+    customerService.getSingleCustomer.mockResolvedValue(customer);
+  });
 
-	test('should return customer data as json', async () => {
-		res.on('end', () => {
-			expect(res._getData()).toBe(apiResult);
-		});
+  test('should return customer data as json', async () => {
+    res.on('end', () => {
+      expect(res._getData()).toBe(apiResult);
+    });
 
-		await get(req, res, () => {});
-		expect(customerService.getcustomerDetail).toBeCalled();
-		expect(customerService.getcustomerGroupInfo).toBeCalled();
-	});
+    await get(req, res, () => {});
+    expect(customerService.getSingleCustomer).toBeCalled();
+  });
 
-	test('when customer doesnt exits should return 404', async () => {
-		req = httpMocks.createRequest({
-			method: 'GET',
-			params: {customername: 'BSSNONEXISTINGcustomerCODE'},
-			url: 'api/customers/BSSNONEXISTINGcustomerCODE'
-		});
-		customerService.getcustomerDetail.mockResolvedValue(null);
+  test('when customer doesnt exist should return 404', async () => {
+    req = httpMocks.createRequest({
+      method: 'GET',
+      params: {id: 99},
+      url: 'api/customers/id'
+    });
+    customerService.getSingleCustomer.mockResolvedValue(null);
 
-		res.on('end', () => {
-			expect(res._getData()).toBe('customer not found');
-			expect(res.statusCode).toBe(404);
-		});
+    res.on('end', () => {
+      expect(res.statusCode).toBe(404);
+      expect(res._getData()).toMatch('customer not found');
+    });
 
-		await get(req, res, () => {});
+    await get(req, res, () => {});
 
-		expect(customerService.getcustomerDetail).toBeCalled();
-		expect(customerService.getcustomerGroupInfo).toBeCalled();
-	});
+    expect(customerService.getSingleCustomer).toBeCalled();
+  });
 });
